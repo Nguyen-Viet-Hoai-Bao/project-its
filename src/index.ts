@@ -11,108 +11,11 @@
 //   EnvVars.Port.toString());
 
 // server.listen(EnvVars.Port, () => logger.info(SERVER_START_MSG));
-// // **** Run **** //
-
-
-// import { AppDataSource } from "./data-source";
-
-// AppDataSource.initialize()
-//   .then(() => {
-//     console.log("Database initialized");
-//   })
-//   .catch((error) => {
-//     console.log("Database connection failed: ", error);
-//   });
+// // **** Run **** //// // **** Run **** //// // **** Run **** //// // **** Run **** //// // **** Run **** //// // **** Run **** //
 
 
 
-
-// import { AppDataSource } from "./config/data-source";
-// import { Author } from "./entity/Author.entity";
-
-// async function main() {
-//   const userRepository = AppDataSource.getRepository(Author);
-
-//   // const users = await userRepository.find();
-//   const user = await userRepository.findOneBy({
-//     id: 1,
-//     });
-
-//   console.log(user);
-// }
-
-// main().catch(error => console.error(error));
-
-
-// import { AppDataSource } from './data-source'
-// // Connect DB
-// AppDataSource.initialize()
-// .then(() => {
-// console.log('Datasource has been initialized')
-// })
-// .catch((err) => {
-// console.error('Error during Datasource initialization: ', err)
-// })
-
-
-// import { Author } from "./entity/Author.entity";
-// import { AppDataSource } from "./config/data-source";
-
-// async function main() {
-//   const connection = await AppDataSource; // Đợi cho kết nối cơ sở dữ liệu được thiết lập
-//   const authorRepository = connection.getRepository(Author);
-
-//   // Tạo một tác giả mới và lưu vào cơ sở dữ liệu
-//   const author = new Author();
-//   author.name = "Nguyen";
-//   await authorRepository.save(author);
-
-//   // Lấy tất cả các tác giả từ cơ sở dữ liệu
-//   const authors = await authorRepository.find();
-
-//   console.log("Tất cả các tác giả:", authors);
-// }
-
-// main().catch(error => console.error(error));
-
-
-// import { Author } from "./entity/Author.entity";
-// import { AppDataSource } from "./config/data-source";
-
-// async function main() {
-//   try {
-//     const connection = await AppDataSource;
-
-//     // Kiểm tra xem kết nối đã được thiết lập thành công hay chưa
-//     if (connection.isConnected) {
-//       console.log("Connected to database successfully.");
-
-//       // Đồng bộ hóa cơ sở dữ liệu nếu cần thiết
-//       await connection.synchronize();
-
-//       // Lấy repository của entity Author
-//       const authorRepository = connection.getRepository(Author);
-
-//       // Tạo một instance của Author và lưu vào database
-//       const author = new Author();
-//       author.name = "Nguyen";
-//       await authorRepository.save(author);
-
-//       // Lấy tất cả các authors từ database
-//       const authors = await authorRepository.find();
-//       console.log(authors);
-//     } else {
-//       console.error("Failed to connect to database.");
-//     }
-//   } catch (error) {
-//     console.error("Error occurred:", error);
-//   }
-// }
-
-// main();
-
-
-import { createConnection, Repository } from 'typeorm';
+import { createConnection, DataSource, Repository } from 'typeorm';
 import { Author } from './entity/Author.entity';
 import { AppDataSource } from './config/data-source';
 import { Book } from './entity/Book.entity';
@@ -121,15 +24,138 @@ async function main() {
   try {
     const connection = await createConnection(AppDataSource);
 
+    // Find all user 
     const authorRepository: Repository<Author> = connection.getRepository(Author);
     const authors: Author[] = await authorRepository.find();
-
     console.log('List of authors:', authors);
 
+    // Find user by id  
+    const author = await authorRepository.findOneBy({
+      id: 1,
+    });
+    if (author) {
+      author.first_name = "Umed";
+      await authorRepository.save(author);
+    } else {
+      console.log("Author not found");
+    }
+    const author_new = await authorRepository.find();
+    console.log('List of new authors:', author_new);
+
+    // createQueryBuilder - Creates a query builder use to build SQL queries.
+    // tạo một truy vấn để tìm tất cả các người dùng có tên là "John". 
+    const authors3 = await authorRepository
+      .createQueryBuilder("author")
+      .where("author.first_name = :first_name", { first_name: "John" })
+      .getMany();
+    console.log('List of new authors - createQueryBuilder:', authors3);
+
+    // getId: Lấy giá trị thuộc tính cột chính của thực thể.
+    const userId = authorRepository.getId(authors3[0]); // userId === 1
+    console.log('getId :', userId);
+
+    // same as const user = new User();
+    //const user = repository.create(); 
+    const autor_tmp = authorRepository.create({
+      id: 1003,
+      first_name: "Timber",
+      family_name: "Saw",
+      date_of_birth: "2003-12-8",
+      name: "Tim",
+    }); 
+    await authorRepository.save(autor_tmp);
+    const author4 = await authorRepository.find();
+    console.log('List of new authors - 4:', author4);
+
+    // Sử dụng merge() để gộp dữ liệu vào đối tượng hiện có
+    const author5 = new Author();
+    authorRepository.merge(author5, { id: 1004 }, { first_name: "Johan" }, { family_name: "Tom" });
+
+    await authorRepository.save(author5);
+    const author6 = await authorRepository.find();
+    console.log('List of new authors - merge:', author6);
+
+    // Lưu một mảng các thực thể
+    // await authorRepository.save([category1, category2, category3]);
+    // Xóa một mảng các thực thể
+    // await authorRepository.remove([category1, category2, category3]);
+
+    // insert:
+    //   - Chỉ chèn các thực thể mới.
+    //   - Không kiểm tra xem thực thể đã tồn tại hay chưa.
+    // save:
+    //   - Kiểm tra xem thực thể đã tồn tại chưa.
+    //   - Nếu thực thể đã tồn tại, nó sẽ được cập nhật. Nếu không, nó sẽ được chèn vào.
+    // await authorRepository.insert([
+    //   {
+    //   id: 1005,
+    //   first_name: "Foo",
+    //   family_name: "Bar",
+    //   },
+    //   {
+    //   id: 1006,
+    //   first_name: "Rizz",
+    //   family_name: "Rak",
+    //   },
+    // ]);
+
+    // **** Update **** //// **** Update **** //// **** Update **** //// **** Update **** //// **** Update **** //
+    // Thực hiện câu lệnh UPDATE author SET name = 'ADULT' WHERE id = 11
+    await authorRepository.update({ id: 1 }, { name: "ADULT" });
+    // Thực hiện chèn mới hoặc cập nhật các thực thể dựa trên Id
+    await authorRepository.upsert(
+      [
+        { id: 1, first_name: "Rizzrak" },
+        { id: 1004, first_name: "Karzzir" }
+      ],
+      ["id"]
+    );
+
+    // **** Delete **** //// **** Delete **** //// **** Delete **** //// **** Delete **** //// **** Delete **** //
+    // await authorRepository.delete(1);
+    // // Thực hiện xóa thực thể với id = 1
+    // await authorRepository.delete([1, 2, 3]);
+    // await authorRepository.delete({ first_name: "Timber" });
+
+    // // Thực hiện xóa mềm thực thể với id = 1
+    // await authorRepository.softDelete(1);
+    // // Thực hiện khôi phục thực thể với id = 1
+    // await authorRepository.restore(1);
+
+    // **** Find/Check **** //// **** Find/Check **** //// **** Find/Check **** //// **** Find/Check **** //// **** Find/Check **** //
+    // Kiểm tra xem có tồn tại bất kỳ thực thể nào khớp với FindOptionsWhere.
+    const exists = await authorRepository.existsBy({ first_name: "Timber" });
+    const count = await authorRepository.count({
+      where: { first_name: "Timber" },
+    });
+    const maximum = await authorRepository.maximum("id", { first_name: "Timber" });
+    const timber1 = await authorRepository.find({
+      where: { first_name: "Timber", },
+    });
+    const timber2 = await authorRepository.findBy({
+      first_name: "Timber",
+    });
+    const timber3 = await authorRepository.findOne({
+      where: { first_name: "Timber" },
+      });
+    const timber4 = await authorRepository.findOneBy({ first_name: "Timber" });
+    const timber5 = await authorRepository.findOneOrFail({
+    where: { first_name: "Timber" },
+    });
+    const timber6 = await authorRepository.findOneByOrFail({ first_name: "Timber" });
+    const rawData = await authorRepository.query(`SELECT * FROM author`);
+    // await authorRepository.clear();
+
+    console.log(" -- Exists: ", exists, "/n -- Count: ", count, "/n -- maximum: ", maximum, 
+      "/n -- timber1: ", timber1, "/n -- timber2: ", timber2, 
+      "/n -- timber3: ", timber3, "/n -- timber4: ", timber4, 
+      "/n -- timber5: ", timber5, "/n -- timber6: ", timber6, "/n -- author: ", rawData);
+
+    // Find all book
     const bookRepository: Repository<Book> = connection.getRepository(Book);
     const books: Book[] = await bookRepository.find();
-
     console.log('List of books:', books);
+
   } catch (error) {
     console.error('Error fetching authors:', error);
   }
