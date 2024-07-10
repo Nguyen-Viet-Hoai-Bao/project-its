@@ -20,8 +20,6 @@ AppDataSource.initialize().then(() => {
     router.get("/about-data", async (req: Request, res: Response, next: NextFunction) => {
         try {
             const aboutRepository = AppDataSource.getRepository(Author);
-            console.log(aboutRepository);
-
             const about = await aboutRepository.find();
             res.send(about);
         } catch (err) {
