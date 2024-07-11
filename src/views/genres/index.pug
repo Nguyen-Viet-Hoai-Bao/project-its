@@ -1,0 +1,11 @@
+extends ../layout
+
+block content
+  h1= title
+  if genres.length
+    ul
+      each genre in genres
+        li
+          a(href=`/genres/${genre.id}`) #{genre.name} (URL: #{genre.url || 'Unknown'})
+  else
+    p There are no genres.

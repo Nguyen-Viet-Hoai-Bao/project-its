@@ -1,0 +1,11 @@
+extends ../layout
+
+block content
+  h1= title
+  if books.length
+    ul
+      each book in books
+        li
+          a(href=`/books/${book.id}`) #{book.title} (Summary : #{book.summary || 'Unknown'}, ISBN: #{book.isbn || 'Unknown'}, AuthorId: #{book.author_id || 'Unknown'})
+  else
+    p There are no books.
