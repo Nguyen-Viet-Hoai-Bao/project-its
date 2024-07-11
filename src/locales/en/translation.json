@@ -1,0 +1,11 @@
+{
+    "home.welcome": "Welcome to {{title}}",
+    "home.content": "Content",
+    "home.record_info": "Record Information",
+    "home.book": "Book",
+    "home.bookinstance": "Book Instance",
+    "home.available_bookinstance": "Available Book Instance",
+    "home.author": "Author",
+    "home.genre": "Genre"
+  }
+  

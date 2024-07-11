@@ -2,4 +2,12 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{message}
+  p= welcome_message
+  h1= content_title
+  p= record_infor_message
+  ul
+    li #[strong= book_label] #{book_count}
+    li #[strong= book_instance_label] #{book_instance_count}
+    li #[strong= available_book_instance_label] #{book_instance_available_count}
+    li #[strong= author_label] #{author_count}
+    li #[strong= genre_label] #{genre_count}

@@ -1,61 +1,13 @@
 import { Router } from 'express';
-import jetValidator from 'jet-validator';
+import { index } from '../controllers/Book.controller';
+import bookRouter from './Book.routes';
 
-import Paths from '../common/Paths';
-import User from '@src/models/User';
-import UserRoutes from './UserRoutes';
+const router = Router();
 
+router.get('/', index);
+router.use("/books", bookRouter);
 
-// **** Variables **** //
-
-const apiRouter = Router(),
-  validate = jetValidator();
+export default router;
 
 
-// ** Add UserRouter ** //
 
-const userRouter = Router();
-
-// Get all users
-userRouter.get(
-  Paths.Users.Get,
-  UserRoutes.getAll,
-);
-
-// Add one user
-userRouter.post(
-  Paths.Users.Add,
-  validate(['user', User.isUser]),
-  UserRoutes.add,
-);
-
-// Update one user
-userRouter.put(
-  Paths.Users.Update,
-  validate(['user', User.isUser]),
-  UserRoutes.update,
-);
-
-// Delete one user
-userRouter.delete(
-  Paths.Users.Delete,
-  validate(['id', 'number', 'params']),
-  UserRoutes.delete,
-);
-
-// Add UserRouter
-apiRouter.use(Paths.Users.Base, userRouter);
-
-
-// **** Export default **** //
-
-export default apiRouter;
-
-
-// import { Router, NextFunction, Request, Response } from 'express'
-// const router: Router = Router()
-// /* GET users listing. */
-// router.get('/', (req: Request, res: Response, next: NextFunction) => {
-// res.send('respond with a resource')
-// })
-// export default router

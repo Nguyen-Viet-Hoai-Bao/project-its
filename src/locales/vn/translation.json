@@ -1,0 +1,11 @@
+{
+    "home.welcome": "Chào mừng đến với {{title}}",
+    "home.content": "Nội dung",
+    "home.record_info": "Thông tin ghi âm",
+    "home.book": "Sách",
+    "home.bookinstance": "Phiên bản sách",
+    "home.available_bookinstance": "Phiên bản sách có sẵn",
+    "home.author": "Tác giả",
+    "home.genre": "Thể loại"
+  }
+  
