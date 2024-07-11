@@ -76,7 +76,7 @@
     "src/**/*.ts",
     "spec/**/*.ts",
     "build.ts"
-  ],
+, "constants.ts"  ],
   "exclude": [
     "src/public/"
   ]

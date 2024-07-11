@@ -3,19 +3,18 @@ import asyncHandler from 'express-async-handler';
 import { AppDataSource } from '../config/data-source';
 import { Author } from '../entity/Author.entity';
 
-// Display list of all Authors.
-export const authorList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Get Authors");
-    const authorRepository = AppDataSource.getRepository(Author);
-    const authors = await authorRepository.find();
-    res.json(authors);
-});
+const authorRepository = AppDataSource.getRepository(Author);
 
-// Display detail page for a specific Author.
+export const authorList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const authors = await authorRepository.find(); 
+  
+    res.render('authors/index', { authors, title: 'List of Authors' });
+  });
+
 export const authorDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     console.log("Get Author Detail");
-    const authorRepository = AppDataSource.getRepository(Author);
-    const author = await authorRepository.findOneBy({ id: parseInt(req.params.id, 10) });
+    const authorId = parseInt(req.params.id, 10);
+    const author = await authorRepository.findOne({ where: { id: authorId } });
 
     if (author) {
         res.json(author);
@@ -24,22 +23,19 @@ export const authorDetail = asyncHandler(async (req: Request, res: Response, nex
     }
 });
 
-// Handle Author create on POST.
 export const authorCreate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     console.log("Create Author");
     const { first_name, family_name, date_of_birth, date_of_death, name, url } = req.body;
-    const authorRepository = AppDataSource.getRepository(Author);
     const newAuthor = authorRepository.create({ first_name, family_name, date_of_birth, date_of_death, name, url });
 
     await authorRepository.save(newAuthor);
     res.status(201).json(newAuthor);
 });
 
-// Handle Author delete on POST.
 export const authorDelete = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     console.log("Delete Author");
-    const authorRepository = AppDataSource.getRepository(Author);
-    const author = await authorRepository.findOneBy({ id: parseInt(req.params.id, 10) });
+    const authorId = parseInt(req.params.id, 10);
+    const author = await authorRepository.findOne({ where: { id: authorId } });
 
     if (author) {
         await authorRepository.remove(author);
@@ -49,15 +45,20 @@ export const authorDelete = asyncHandler(async (req: Request, res: Response, nex
     }
 });
 
-// Handle Author update on POST.
 export const authorUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     console.log("Update Author");
-    const authorRepository = AppDataSource.getRepository(Author);
-    const author = await authorRepository.findOneBy({ id: parseInt(req.params.id, 10) });
+    const authorId = parseInt(req.params.id, 10);
+    const author = await authorRepository.findOne({ where: { id: authorId } });
 
     if (author) {
         const { first_name, family_name, date_of_birth, date_of_death, name, url } = req.body;
-        authorRepository.merge(author, { first_name, family_name, date_of_birth, date_of_death, name, url });
+        author.first_name = first_name;
+        author.family_name = family_name;
+        author.date_of_birth = date_of_birth;
+        author.date_of_death = date_of_death;
+        author.name = name;
+        author.url = url;
+
         const updatedAuthor = await authorRepository.save(author);
         res.json(updatedAuthor);
     } else {

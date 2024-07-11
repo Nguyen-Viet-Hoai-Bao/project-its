@@ -1,0 +1,10 @@
+extends layout
+
+block content
+  h1= author.name
+  p Born: #{author.date_of_birth}
+  p Died: #{author.date_of_death || 'Unknown'}
+  p
+    a(href=`/authors/${author.id}/edit`) Edit
+    form(action=`/authors/${author.id}/delete`, method='POST')
+      button(type='submit') Delete

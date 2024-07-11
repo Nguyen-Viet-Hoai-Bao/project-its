@@ -1,8 +1,16 @@
 import {Router} from 'express';
-import { bookList } from '../controllers/Book.controller';
+import { bookList, bookDetail, bookCreate, bookDelete, bookUpdate } from '../controllers/Book.controller';
 
-const bookRouter = Router();
+const router = Router();
 
-bookRouter.get('/', bookList);
+router.get('/', bookList);
 
-export default bookRouter;
+router.get('/:id', bookDetail);
+
+router.post('/create', bookCreate);
+
+router.post('/delete/:id', bookDelete);
+
+router.post('/update/:id', bookUpdate);
+
+export default router;

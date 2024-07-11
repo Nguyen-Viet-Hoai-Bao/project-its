@@ -1,0 +1,11 @@
+extends ../layout
+
+block content
+  h1= title
+  if authors.length
+    ul
+      each author in authors
+        li
+          a(href=`/authors/${author.id}`) #{author.first_name} (Family Name: #{author.family_name || 'Unknown'}, Born: #{author.date_of_birth || 'Unknown'}, Died: #{author.date_of_death || 'Unknown'})
+  else
+    p There are no authors.
