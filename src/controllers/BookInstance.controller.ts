@@ -8,6 +8,7 @@ const bookInstanceRepository = AppDataSource.getRepository(BookInstance);
 
 // Display list of all BookInstances.
 export const bookInstanceList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    console.log("Get BookInstance List");
     const instances = await bookInstanceRepository.find({ relations: ['book'] });
   
     res.render('book-instances/index', { instances, title: 'List of Book Instances' });
@@ -20,7 +21,7 @@ export const bookInstanceDetail = asyncHandler(async (req: Request, res: Respons
     const instance = await bookInstanceRepository.findOne({ where: { id: instanceId } });
 
     if (instance) {
-        res.json(instance);
+        res.render('book-instances/detail', { instance, title: 'Detail of Book Instances' });
     } else {
         res.status(404).json({ message: 'BookInstance not found' });
     }

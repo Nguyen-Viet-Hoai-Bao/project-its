@@ -1,11 +1,25 @@
 {
-    "home.welcome": "Chào mừng đến với {{title}}",
-    "home.content": "Nội dung",
-    "home.record_info": "Thông tin ghi âm",
-    "home.book": "Sách",
-    "home.bookinstance": "Phiên bản sách",
-    "home.available_bookinstance": "Phiên bản sách có sẵn",
-    "home.author": "Tác giả",
-    "home.genre": "Thể loại"
+  "home": {
+      "welcome": "Chào mừng bạn đến với {{title}}",
+      "content": "Nội dung",
+      "record_infor": "Tình trạng thư viện của chúng tôi:",
+      "book": "Sách:",
+      "bookinstance": "Bản sao:",
+      "available_bookinstance": "Tất cả các bản sao có sẵn:",
+      "author": "Tác giả:",
+      "genre": "Thể loại:"
+  },
+  "sidebar": {
+      "home": "Thư viện địa phương",
+      "book": "Sách",
+      "author": "Tác giả",
+      "genre": "Thể loại",
+      "bookinstance": "Bản sao sách",
+      "create_author": "Tạo mới tác giả",
+      "create_genre": "Tạo mới thể loại",
+      "create_book": "Tạo mới sách",
+      "create_bookinstance": "Tạo mới bản sao sách",
+      "english": "Tiếng Anh",
+      "vietnamese": "Tiếng Việt"
   }
-  
+}

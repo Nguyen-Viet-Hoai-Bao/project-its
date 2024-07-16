@@ -6,6 +6,6 @@ block content
     ul
       each instance in instances
         li
-          a(href=`/instances/${instances.id}`) #{instances.imprint} (Status: #{instances.status || 'Unknown'}, Due Back: #{instances.due_back || 'Unknown'}, BookId: #{instances.book_id || 'Unknown'})
+          a(href=`/book-instances/${instance.id}`) #{instance.imprint} (Status: #{instance.status || 'Unknown'}, Due Back: #{instance.due_back || 'Unknown'}, BookId: #{instance.book_id || 'Unknown'})
   else
     p There are no instances.

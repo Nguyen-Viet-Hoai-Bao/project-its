@@ -1,25 +1,44 @@
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
-import routes from './routes/index';
+import i18next from 'i18next';
+import Backend from 'i18next-fs-backend';
+import middleware from 'i18next-http-middleware';
+import router from './routes/index';
 import { AppDataSource } from './config/data-source';
 
 const app = express();
 
+i18next
+  .use(Backend)
+  .use(middleware.LanguageDetector)
+  .init({
+    fallbackLng: 'en',
+    backend: {
+      loadPath: path.join(__dirname, 'locales/{{lng}}/{{ns}}.json'),
+    },
+    interpolation: {
+      escapeValue: false,
+    },
+  });
+
 app.set('view engine', 'pug');
 app.set('views', path.join(__dirname, 'views'));
+
+app.use(middleware.handle(i18next));
 
 AppDataSource.initialize()
   .then(() => {
     console.log("Database connected");
+
     app.use(express.json());
-    app.use('/', routes);
+    app.use('/', router);
 
     app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
       console.error('Error:', err);
       res.status(500).send('Internal Server Error');
     });
 
-    const PORT = process.env.PORT;
+    const PORT = process.env.PORT; 
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
     });

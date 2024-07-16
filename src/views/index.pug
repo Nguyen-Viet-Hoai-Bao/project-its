@@ -1,13 +1,13 @@
 extends layout
 
 block content
-  h1= title
-  p= welcome_message
-  h1= content_title
-  p= record_infor_message
-  ul
-    li #[strong= book_label] #{book_count}
-    li #[strong= book_instance_label] #{book_instance_count}
-    li #[strong= available_book_instance_label] #{book_instance_available_count}
-    li #[strong= author_label] #{author_count}
-    li #[strong= genre_label] #{genre_count}
+    h1= title
+    p #{t('home.welcome', {title: title})}
+    h1 #{t('home.content')}
+    p #{t('home.record_infor')}
+    ul
+        li #[strong #{t('home.book')}] #{book_count}
+        li #[strong #{t('home.bookinstance')}] #{book_instance_count}
+        li #[strong #{t('home.available_bookinstance')}] #{book_instance_available_count}
+        li #[strong #{t('home.author')}] #{author_count}
+        li #[strong #{t('home.genre')}] #{genre_count}
