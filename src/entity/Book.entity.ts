@@ -9,17 +9,17 @@ export class Book extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255 })
     title!: string;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255 })
     summary!: string;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM, nullable: true })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255, nullable: true })
     isbn!: string;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM, nullable: true })
-    url!: string;
+    @Column({ type: 'int' })
+    authorId!: number;
 
     @ManyToOne(() => Author, author => author.books)
     author!: Author;
@@ -35,6 +35,13 @@ export class Book extends BaseEntity {
     })
     genres!: Genre[];
 
+    constructor(data?: Partial<Book>) {
+        super();
+        if (data) {
+            Object.assign(this, data);
+        }
+    }
+
     getTitle(): string {
         return this.title;
     }
@@ -47,19 +54,11 @@ export class Book extends BaseEntity {
         return this.isbn || null;
     }
 
-    getUrl(): string | null {
-        return this.url || null;
-    }
-
     getAuthor(): Author {
         return this.author;
     }
 
     getInstances(): BookInstance[] {
         return this.instances;
-    }
-
-    getGenres(): Genre[] {
-        return this.genres;
     }
 }

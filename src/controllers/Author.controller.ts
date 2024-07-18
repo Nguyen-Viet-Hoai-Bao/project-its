@@ -1,65 +1,83 @@
 import { Request, Response, NextFunction } from "express";
 import asyncHandler from 'express-async-handler';
-import { AppDataSource } from '../config/data-source';
-import { Author } from '../entity/Author.entity';
-
-const authorRepository = AppDataSource.getRepository(Author);
+import { findAllAuthors, findAuthorById, createAuthor, deleteAuthor, updateAuthor } from '../services/Author.service';
+import { findBookByAuthorId } from "@src/services/Book.service";
 
 export const authorList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const authors = await authorRepository.find(); 
-  
+    const authors = await findAllAuthors();
     res.render('authors/index', { authors, title: 'List of Authors' });
-  });
+});
 
 export const authorDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Get Author Detail");
     const authorId = parseInt(req.params.id, 10);
-    const author = await authorRepository.findOne({ where: { id: authorId } });
+    const author = await findAuthorById(authorId);
 
     if (author) {
-        res.json(author);
+        res.render('authors/detail', { author, title: 'Detail of Authors' });
     } else {
         res.status(404).json({ message: 'Author not found' });
     }
 });
 
 export const authorCreate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Create Author");
-    const { first_name, family_name, date_of_birth, date_of_death, name, url } = req.body;
-    const newAuthor = authorRepository.create({ first_name, family_name, date_of_birth, date_of_death, name, url });
-
-    await authorRepository.save(newAuthor);
+    const { first_name, family_name, date_of_birth, date_of_death } = req.body;
+    const newAuthor = await createAuthor({ first_name, family_name, date_of_birth, date_of_death });
     res.status(201).json(newAuthor);
 });
 
-export const authorDelete = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Delete Author");
-    const authorId = parseInt(req.params.id, 10);
-    const author = await authorRepository.findOne({ where: { id: authorId } });
+export const authorDeleteGet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id)) {
+            res.status(404).send('Invalid author ID');
+            return;
+        }
 
-    if (author) {
-        await authorRepository.remove(author);
-        res.json({ message: 'Author deleted' });
-    } else {
-        res.status(404).json({ message: 'Author not found' });
+        const author = await findAuthorById(id);
+        if (!author) {
+            res.redirect('/authors');
+            return;
+        }
+
+        const authorBooks = await findBookByAuthorId(id);
+        res.render('authors/delete', { title: 'Delete Author', author: author, authorBooks: authorBooks });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch author details', error });
+    }
+});
+
+export const authorDeletePost = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = parseInt(req.body.authorid, 10);
+        if (isNaN(id)) {
+            res.status(404).send('Invalid author ID');
+            return;
+        }
+        const author = await findAuthorById(id);
+        if (!author) {
+            res.redirect('/authors');
+            return;
+        }
+
+        const authorBooks = await findBookByAuthorId(id);
+        if (authorBooks.length > 0) {
+            res.render('authors/delete', { title: 'Delete Author', author: author, authorBooks: authorBooks });
+            return;
+        } else {
+            await deleteAuthor(id);
+            res.redirect('/authors');
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete author', error });
     }
 });
 
 export const authorUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Update Author");
     const authorId = parseInt(req.params.id, 10);
-    const author = await authorRepository.findOne({ where: { id: authorId } });
+    const { first_name, family_name, date_of_birth, date_of_death} = req.body;
+    const updatedAuthor = await updateAuthor(authorId, { first_name, family_name, date_of_birth, date_of_death });
 
-    if (author) {
-        const { first_name, family_name, date_of_birth, date_of_death, name, url } = req.body;
-        author.first_name = first_name;
-        author.family_name = family_name;
-        author.date_of_birth = date_of_birth;
-        author.date_of_death = date_of_death;
-        author.name = name;
-        author.url = url;
-
-        const updatedAuthor = await authorRepository.save(author);
+    if (updatedAuthor) {
         res.json(updatedAuthor);
     } else {
         res.status(404).json({ message: 'Author not found' });

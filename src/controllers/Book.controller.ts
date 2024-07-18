@@ -1,95 +1,122 @@
 import { Request, Response, NextFunction } from "express";
 import asyncHandler from 'express-async-handler';
-import { AppDataSource } from '../config/data-source';
-import { Book } from '../entity/Book.entity';
-import { Author } from "@src/entity/Author.entity";
-import { Genre } from "@src/entity/Genre.entity";
 import i18next from "i18next";
-import { BookInstance } from "@src/entity/BookInstance.entity";
+import { AppDataSource } from '../config/data-source';
+import { Author } from '../entity/Author.entity';
+import { Genre } from '../entity/Genre.entity';
+import { BookInstance } from '../entity/BookInstance.entity';
+import { Book } from "@src/entity/Book.entity";
+import * as bookService from '../services/Book.service';
+import { body, validationResult } from "express-validator";
+import { findAllAuthors } from "@src/services/Author.service";
+import { findAllGenres } from "@src/services/Genre.service";
 
-const bookRepository = AppDataSource.getRepository(Book);
-
-// Display list of all Books.
 export const bookList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const books = await bookRepository.find({ relations: ['author', 'genres'] });
-  
+    const books = await bookService.findAllBooks();
     res.render('books/index', { books, title: 'List of Books' });
 });
 
-// Display detail page for a specific Book.
 export const bookDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Get Book Detail");
     const bookId = parseInt(req.params.id, 10);
-    const book = await bookRepository.findOne({ where: { id: bookId } });
+    const book = await bookService.findBookById(bookId);
 
     if (book) {
-        res.json(book);
+        res.render('books/detail', { book, title: 'Detail of Books' });
     } else {
         res.status(404).json({ message: 'Book not found' });
     }
 });
 
 export const bookCreate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Create Book");
-    const { title, summary, isbn, url, authorId, genreIds } = req.body;
+    const { title, summary, isbn, authorId, genreIds } = req.body;
 
     try {
-        const author = authorId ? await AppDataSource.getRepository(Author).findOne(authorId) : null;
-        const genres = genreIds ? await AppDataSource.getRepository(Genre).findByIds(genreIds) : [];
-
-        const newBook = bookRepository.create({title, summary, isbn, url,
-            author: author || undefined, 
-            genres: genres.length > 0 ? genres : undefined, 
-         });
-
-        await bookRepository.save(newBook);
+        const newBook = await bookService.createBook({ title, summary, isbn }, authorId, genreIds);
         res.status(201).json(newBook);
     } catch (error) {
         res.status(500).json({ message: 'Failed to create book', error });
     }
 });
 
-// Handle Book delete on DELETE.
 export const bookDelete = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Delete Book");
     const bookId = parseInt(req.params.id, 10);
-    const book = await bookRepository.findOne({ where: { id: bookId } });
+    const isDeleted = await bookService.deleteBook(bookId);
 
-    if (book) {
-        await bookRepository.remove(book);
+    if (isDeleted) {
         res.json({ message: 'Book deleted' });
     } else {
         res.status(404).json({ message: 'Book not found' });
     }
 });
 
-// Handle Book update on PUT.
-export const bookUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Update Book");
-    const bookId = parseInt(req.params.id, 10);
-    const { title, summary, isbn, url, authorId, genreIds } = req.body;
-    const book = await bookRepository.findOne({ where: { id: bookId } });
-
-    if (book) {
-        try {
-            const genres = await AppDataSource.getRepository(Genre).findByIds(genreIds);
-
-            book.title = title;
-            book.summary = summary;
-            book.isbn = isbn;
-            book.url = url;
-            book.author = authorId ;
-            book.genres = genres;
-
-            const updatedBook = await bookRepository.save(book);
-            res.json(updatedBook);
-        } catch (error) {
-            res.status(500).json({ message: 'Failed to update book', error });
-        }
-    } else {
-        res.status(404).json({ message: 'Book not found' });
+export const bookUpdateGet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try{
+        const errors = validationResult(req);
+        const id = parseInt(req.params.id);
+        const [book, allAuthors, allGenres] = await Promise.all([
+            bookService.findBookById(id),
+            findAllAuthors(),
+            findAllGenres()
+        ]);
+        res.render('books/update', { title: 'Update Book', authors: allAuthors, genres: allGenres, book, errors });
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch author details', error });
     }
 });
+
+export const bookUpdatePost = [
+    (req: Request, res: Response, next: NextFunction) => {
+        const id = parseInt(req.params.id);
+        if (isNaN(id)) {
+            return res.status(400).send('Invalid book ID');
+        }
+        req.body.id = id; 
+        if (!Array.isArray(req.body.genre)) {
+            req.body.genre = typeof req.body.genre === 'undefined' ? [] : [req.body.genre];
+        }
+        next();
+    },
+    body('title', 'Title must not be empty.').trim().isLength({ min: 1 }).escape(),
+    body('author', 'Author must not be empty.').trim().isLength({ min: 1 }).escape(),
+    body('summary', 'Summary must not be empty.').trim().isLength({ min: 1 }).escape(),
+    body('isbn', 'ISBN must not be empty').trim().isLength({ min: 1 }).escape(),
+    body('genre.*').escape(),
+    asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        const id = req.body.id; 
+        const errors = validationResult(req);
+
+        const bookData = {
+            title: req.body.title,
+            author: req.body.author,
+            summary: req.body.summary,
+            isbn: req.body.isbn
+        };
+        const genreIds = req.body.genre.map((item: string) => parseInt(item));
+
+        if (!errors.isEmpty()) {
+            const [allAuthors, allGenres] = await Promise.all([
+                findAllAuthors(),
+                findAllGenres()
+            ]);
+            res.render('books/update', {
+                title: 'Update Book',
+                authors: allAuthors,
+                genres: allGenres,
+                book: { id, ...bookData, genres: genreIds },
+                errors: errors.array()
+            });
+            return;
+        }
+
+        const updatedBook = await bookService.updateBook(id, bookData, genreIds);
+        if (updatedBook) {
+            res.render('books/detail', { book: updatedBook, title: 'Detail of Books' });
+        } else {
+            res.status(404).send('Book not found');
+        }
+    })
+];
+
 
 export const index = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const bookRepository = AppDataSource.getRepository(Book);
@@ -108,15 +135,6 @@ export const index = asyncHandler(async (req: Request, res: Response, next: Next
     ]);
 
     res.render('index', {
-        title: 'Local library home',
-        welcome_message: 'Welcome to the Library!',
-        content_title: 'Content',
-        record_infor_message: 'Here is some information about our records:',
-        book_label: 'Books',
-        book_instance_label: 'Book Instances',
-        available_book_instance_label: 'Available Book Instances',
-        author_label: 'Authors',
-        genre_label: 'Genres',
         book_count: numBooks,
         book_instance_count: numBookInstances,
         book_instance_available_count: availableBookInstances[1],
@@ -124,6 +142,4 @@ export const index = asyncHandler(async (req: Request, res: Response, next: Next
         genre_count: numGenres,
         t: i18next.t.bind(i18next)
     });
-    console.error('render data:', ' --- ', numBooks, ' --- ', numBookInstances, ' --- ',
-        availableBookInstances[1], ' --- ', numAuthors, ' --- ', numGenres);
 });

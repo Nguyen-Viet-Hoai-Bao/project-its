@@ -1,10 +1,11 @@
-extends layout
+extends ../layout
 
 block content
-  h1= author.name
-  p Born: #{author.date_of_birth}
-  p Died: #{author.date_of_death || 'Unknown'}
+  h1= book.title
+  p Title : #{book.title}
+  p Summary : #{book.summary || 'Unknown'}
+  p IsBn : #{book.isBn || 'Unknown'}
   p
-    a(href=`/authors/${author.id}/edit`) Edit
-    form(action=`/authors/${author.id}/delete`, method='POST')
+    a(href=`/books/update/${book.id}`) Edit
+    form(action=`/books/delete/${book.id}`, method='POST')
       button(type='submit') Delete

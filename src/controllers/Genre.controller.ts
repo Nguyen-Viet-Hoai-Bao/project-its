@@ -1,27 +1,24 @@
-import { AppDataSource } from '@src/config/data-source';
-import asyncHandler from 'express-async-handler';
-import { Genre } from '@src/entity/Genre.entity';
 import { Request, Response, NextFunction } from 'express';
+import asyncHandler from 'express-async-handler';
+import { findAllGenres, findGenreById, createGenre, updateGenre, deleteGenre } from '../services/Genre.service';
+import { body, Result, validationResult } from 'express-validator';
+import { Genre } from '@src/entity/Genre.entity';
+import { AppDataSource } from '@src/config/data-source';
 
-const genreRepository = AppDataSource.getRepository(Genre);
-
-// Display list of all BookInstances.
 export const genreList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const genres = await genreRepository.find();
-        res.render('genres/index', { genres, title: 'List of Genre' });
+        const genres = await findAllGenres();
+        res.render('genres/index', { genres, title: 'List of Genres' });
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch genres', error });
     }
 });
-// Display detail page for a specific BookInstance.
+
 export const genreDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        console.log("Get Genre Detail");
         const genreId = parseInt(req.params.id, 10);
-        const genre = await genreRepository.findOne({ where: { id: genreId } });
-    
-        res.render('genres/detail', { genre, title: 'List of Genre' });
+        const genre = await findGenreById(genreId);
+        res.render('genres/detail', { genre, title: 'Genre Detail' });
     } catch (error) {
         res.status(500).json({ message: 'Failed to fetch genre details', error });
     }
@@ -29,43 +26,76 @@ export const genreDetail = asyncHandler(async (req: Request, res: Response, next
 
 export const genreCreate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { name, url } = req.body;
-        const genre = new Genre();
-        genre.name = name;
-        genre.url = url;
-
-        const savedGenre = await genreRepository.save(genre);
-        res.status(201).json(savedGenre);
+        const { name } = req.body;
+        const newGenre = await createGenre({ name });
+        res.status(201).json(newGenre);
     } catch (error) {
         res.status(500).json({ message: 'Failed to create genre', error });
     }
 });
 
 export const genreUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const genreId = parseInt(req.params.id, 10);
-    const genre = await genreRepository.findOne({ where: { id: genreId } });
+    try {
+        const genreId = parseInt(req.params.id, 10);
+        const { name } = req.body;
+        const updatedGenre = await updateGenre(genreId, { name });
 
-    if (genre) {
-        const { name, url } = req.body;
-        genre.name = name;
-        genre.url = url;
-
-        const updatedAuthor = await genreRepository.save(genre);
-        res.json(updatedAuthor);
-    } else {
-        res.status(404).json({ message: 'Author not found' });
+        if (updatedGenre) {
+            res.json(updatedGenre);
+        } else {
+            res.status(404).json({ message: 'Genre not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update genre', error });
     }
 });
 
 export const genreDelete = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-        console.log("Delete Genre");
+    try {
         const genreId = parseInt(req.params.id, 10);
-        const genre = await genreRepository.findOne({ where: { id: genreId } });
+        const isDeleted = await deleteGenre(genreId);
 
-        if (genre) {
-            await genreRepository.remove(genre);
-            res.json({ message: 'Author deleted' });
+        if (isDeleted) {
+            res.json({ message: 'Genre deleted' });
         } else {
-            res.status(404).json({ message: 'Author not found' });
+            res.status(404).json({ message: 'Genre not found' });
         }
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to delete genre', error });
+    }
 });
+
+export const genreCreateGet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    res.render('genres/form', { title: 'Create new genre' })
+})
+
+const genreRepository = AppDataSource.getRepository(Genre);
+export const genreCreatePost = [
+    body('name', 'Genre name must contain at least 3 characters').trim().isLength({ min: 3 }).escape(),
+    asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        const genre = new Genre();
+        if (!errors.isEmpty()) {
+            res.render('genres/form', {
+                title: 'Create Genre',
+                genre: genre,
+                errors: errors.array()
+            });
+            return;
+        } else {
+            const genreExists = await genreRepository.findOne({ where: { name: req.body.name }});
+            if (genreExists) {
+                res.render('genres/form', {
+                    title: 'Create Genre',
+                    genre: genre,
+                    errors: [{ msg: 'Genre name already exists' }] 
+                });
+            } else {
+                const { name } = req.body;
+                const newGenre = await createGenre({ name });
+                const genres = await findAllGenres();
+                res.render('genres/index', { genres, title: 'List of Genres' });
+            }
+        }
+    })
+];

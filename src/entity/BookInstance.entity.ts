@@ -7,21 +7,24 @@ export class BookInstance extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255 })
     imprint!: string;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255 })
     status!: string;
 
     @Column({ type: 'date', nullable: true })
     due_back!: Date;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM, nullable: true })
-    url!: string;
-
-    // Mối quan hệ Many-to-One với bảng Book
     @ManyToOne(() => Book, book => book.instances)
     book!: Book;
+
+    constructor(data?: Partial<BookInstance>) {
+        super();
+        if (data) {
+            Object.assign(this, data);
+        }
+    }
 
     getImprint(): string {
         return this.imprint;
@@ -33,10 +36,6 @@ export class BookInstance extends BaseEntity {
 
     getDueBack(): Date | null {
         return this.due_back || null;
-    }
-
-    getUrl(): string | null {
-        return this.url || null;
     }
 
     getBook(): Book {

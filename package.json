@@ -10,7 +10,10 @@
     "server:start": "DEBUG=express-locallibrary:* npm run dev:start",
     "dev": "nodemon",
     "test": "nodemon --config ./spec/nodemon.json",
-    "test:no-reloading": "npx ts-node --files -r tsconfig-paths/register ./spec"
+    "test:no-reloading": "npx ts-node --files -r tsconfig-paths/register ./spec",
+    "migration:generate": "npm run typeorm -- -d ./src/config/data-source.ts migration:generate ./src/config/migrations/newMigration",
+    "migration:run": "npm run typeorm migration:run -- -d ./src/config/data-source.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d ./src/config/data-source.ts"
   },
   "nodemonConfig": {
     "watch": [
@@ -35,6 +38,7 @@
     "express": "^4.19.2",
     "express-async-errors": "^3.1.1",
     "express-async-handler": "^1.2.0",
+    "express-validator": "^7.1.0",
     "helmet": "^7.1.0",
     "i18next": "^23.11.5",
     "i18next-fs-backend": "^2.3.1",

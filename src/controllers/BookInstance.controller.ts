@@ -1,24 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import asyncHandler from 'express-async-handler';
-import { AppDataSource } from '../config/data-source';
-import { BookInstance } from '../entity/BookInstance.entity';
-import { Book } from '../entity/Book.entity';
+import { findAllBookInstances, findBookInstanceById, createBookInstance, deleteBookInstance, updateBookInstance } from '../services/BookInstance.service';
 
-const bookInstanceRepository = AppDataSource.getRepository(BookInstance);
-
-// Display list of all BookInstances.
 export const bookInstanceList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Get BookInstance List");
-    const instances = await bookInstanceRepository.find({ relations: ['book'] });
-  
+    const instances = await findAllBookInstances();
     res.render('book-instances/index', { instances, title: 'List of Book Instances' });
 });
 
-// Display detail page for a specific BookInstance.
 export const bookInstanceDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Get BookInstance Detail");
     const instanceId = parseInt(req.params.id, 10);
-    const instance = await bookInstanceRepository.findOne({ where: { id: instanceId } });
+    const instance = await findBookInstanceById(instanceId);
 
     if (instance) {
         res.render('book-instances/detail', { instance, title: 'Detail of Book Instances' });
@@ -27,73 +18,40 @@ export const bookInstanceDetail = asyncHandler(async (req: Request, res: Respons
     }
 });
 
-// Handle BookInstance create on POST.
-export const bookInstanceCreate = async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Create BookInstance");
-    const { imprint, status, due_back, url, bookId } = req.body;
+export const bookInstanceCreate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const { imprint, status, due_back, bookId } = req.body;
 
     try {
-        const book = await AppDataSource.getRepository(Book).findOne(bookId);
-
-        if (!book) {
-            return res.status(404).json({ message: 'Book not found' });
-        }
-
-        const newBookInstance = new BookInstance();
-        newBookInstance.imprint = imprint;
-        newBookInstance.status = status;
-        newBookInstance.due_back = due_back;
-        newBookInstance.url = url;
-        newBookInstance.book = book;
-
-        await bookInstanceRepository.save(newBookInstance);
+        const newBookInstance = await createBookInstance({ imprint, status, due_back }, bookId);
         res.status(201).json(newBookInstance);
     } catch (error) {
-        console.error('Failed to create book instance', error);
         res.status(500).json({ message: 'Failed to create book instance', error });
     }
-};
+});
 
-// Handle BookInstance delete on DELETE.
 export const bookInstanceDelete = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Delete BookInstance");
     const instanceId = parseInt(req.params.id, 10);
-    const instance = await bookInstanceRepository.findOne({ where: { id: instanceId } });
+    const isDeleted = await deleteBookInstance(instanceId);
 
-    if (instance) {
-        await bookInstanceRepository.remove(instance);
+    if (isDeleted) {
         res.json({ message: 'BookInstance deleted' });
     } else {
         res.status(404).json({ message: 'BookInstance not found' });
     }
 });
 
-// Handle BookInstance update on PUT.// Handle BookInstance update on PUT.
-export const bookInstanceUpdate = async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Update BookInstance");
+export const bookInstanceUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const instanceId = parseInt(req.params.id, 10);
-    const { imprint, status, due_back, url, bookId } = req.body;
-    const instance = await bookInstanceRepository.findOne({ where: { id: instanceId } });
+    const { imprint, status, due_back, bookId } = req.body;
 
-    if (instance) {
-        try {
-            const book = await AppDataSource.getRepository(Book).findOne(bookId);
-
-            if (!book) {
-                return res.status(404).json({ message: 'Book not found' });
-            }
-            instance.imprint = imprint;
-            instance.status = status;
-            instance.due_back = due_back;
-            instance.url = url;
-            instance.book = book;
-
-            const updatedInstance = await bookInstanceRepository.save(instance);
-            return res.json(updatedInstance); // Ensure returning the response
-        } catch (error) {
-            return res.status(500).json({ message: 'Failed to update book', error }); // Ensure returning the response
+    try {
+        const updatedInstance = await updateBookInstance(instanceId, { imprint, status, due_back }, bookId);
+        if (updatedInstance) {
+            res.json(updatedInstance);
+        } else {
+            res.status(404).json({ message: 'BookInstance not found' });
         }
-    } else {
-        return res.status(404).json({ message: 'BookInstance not found' }); // Ensure returning the response
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update book instance', error });
     }
-};
+});

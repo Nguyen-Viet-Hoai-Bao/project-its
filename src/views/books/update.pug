@@ -1,0 +1,36 @@
+extends ../layout
+
+block content
+  h1= title
+
+  form(action=`updatePost/${book.id}` method="POST")
+    div.form-group
+      label(for="title") Title:
+      input#title.form-control(type="text" name="title" value=book.title required)
+
+    div.form-group
+      label(for="author") Author:
+      select#author.form-control(name="author" required)
+        each author in authors
+          option(value=author.id selected=(book.author && book.author.id === author.id))= `${author.first_name} ${author.family_name}`
+
+    div.form-group
+      label(for="summary") Summary:
+      textarea#summary.form-control(name="summary" required)= book.summary
+
+    div.form-group
+      label(for="isbn") ISBN:
+      input#isbn.form-control(type="text" name="isbn" value=book.isbn required)
+
+    div.form-group
+      label(for="genres") Genres:
+      select#genres.form-control(name="genre" multiple)
+        each genre in genres
+          option(value=genre.id selected=(book.genres.some(g => g.id === genre.id)))= genre.name
+
+    div.form-group
+      button(type="submit" class="btn btn-primary") Update Book
+  if errors
+    ul
+      for error in errors
+        li!= error.msg
