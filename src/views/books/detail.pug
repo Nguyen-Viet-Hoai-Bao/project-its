@@ -1,11 +1,37 @@
 extends ../layout
 
 block content
-  h1= book.title
-  p Title : #{book.title}
-  p Summary : #{book.summary || 'Unknown'}
-  p IsBn : #{book.isBn || 'Unknown'}
+  h1 #{book.title}
+
+  p #[strong #{t('detail.author')}: ]
+    a(href=`/authors/${book.author.id}`) #{book.author.first_name} #{book.author.family_name}
+
+  p #[strong #{t('detail.summary')}:] #{book.summary}
+  p #[strong #{t('detail.isbn')}:] #{book.isbn}
+  p #[strong #{t('detail.genre')}: ]
+    each val, index in bookGenres
+      a(href=`/genres/${val.id}`) #{val.name}
+      if index < bookGenres.length - 1
+        |,
+
+  div
+    h2 #{t('detail.copies')}
+    each bookinstance in bookInstances
+      div.list-group-item
+        p #[strong #{t('detail.status')}: ]
+          if bookinstance.status == BookInstanceStatus.Available
+            span.text-success #{bookinstance.status}
+          else if bookinstance.status == BookInstanceStatus.Maintenance
+            span.text-danger #{bookinstance.status}
+          else
+            span.text-warning #{bookinstance.status}
+        p #[strong #{t('detail.imprint')}:] #{bookinstance.imprint}
+        if bookinstance.status != BookInstanceStatus.Available
+          p #[strong #{t('detail.dueback')}:] #{bookinstance.due_back}
+        p #[strong #{t('detail.id')}: ]
+          a(href=`/bookinstances/${bookinstance.id}`) #{bookinstance.id}
+
   p
-    a(href=`/books/update/${book.id}`) Edit
+    a(href=`/books/update/${book.id}`) #{t('detail.edit')}
     form(action=`/books/delete/${book.id}`, method='POST')
-      button(type='submit') Delete
+      button(type='submit' class='btn btn-danger') #{t('detail.delete')}

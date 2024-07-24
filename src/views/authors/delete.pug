@@ -1,23 +1,19 @@
 extends ../layout
 
 block content
-  h1 #{title}: #{author.name}
-  p= author.lifespan
+  h1 #{t('authorDetail.title')}: #{author.name}
+  p #{author.lifespan}
 
   if authorBooks.length
-    p #[strong Delete the following books before attempting to delete this author.]
-    div(style='margin-left:20px;margin-top:20px')
-      h4  
-      dl
-        each book in authorBooks
-          dt
-            a(href=book.id) Title : #{book.title}
-          dd Summary : #{book.summary}
-          dd IsBn: #{book.isBn || 'Unknown'}
-
+    p #[strong #{t('authorDetail.deleteBooksWarning')}]
+    div(style='margin-left: 20px; margin-top: 20px;')
+      each book in authorBooks
+        h4
+          a(href=`/books/${book.id}`) #{t('authorDetail.bookTitle')}: #{book.title}
+        dl
+          dd #{t('authorDetail.bookSummary')}: #{book.summary}
+          dd #{t('authorDetail.bookIsbn')}: #{book.isBn || t('authorDetail.unknown')}
   else
-    p Do you really want to delete this Author?
-    form(method='POST' action='deletePost')
-      div.form-group
-        input#authorid.form-control(type='hidden', name='authorid', value=author.id)
-      button.btn.btn-primary(type='submit') Delete
+    p #{t('authorDetail.deleteAuthorConfirmation')}
+    form(method='POST' action=`deletePost/${author.id}`)
+      button(type='submit' class='btn btn-danger') #{t('authorDetail.deleteButton')}

@@ -19,7 +19,7 @@ export class Author extends BaseEntity {
     @Column({ type: 'date', nullable: true })
     date_of_death!: Date;
 
-    @OneToMany(() => Book, books => books.author)
+    @OneToMany(() => Book, book => book.author)
     books!: Book[];
 
     constructor(data?: Partial<Author>) {

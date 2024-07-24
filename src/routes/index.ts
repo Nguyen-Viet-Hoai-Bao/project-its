@@ -10,7 +10,7 @@ const router = Router();
 router.use("/authors", authorRoutes);
 router.use("/books", bookRoutes);
 router.get('/index', index);
-router.use("/book-instances", bookInstanceRoutes);
+router.use("/bookinstances", bookInstanceRoutes);
 router.use("/genres", genreRoutes);
 
 export default router;

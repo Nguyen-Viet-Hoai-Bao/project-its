@@ -1,10 +1,19 @@
 extends ../layout
 
 block content
-  h1= genre.name
-  p Name: #{genre.name}
-  p Url: #{genre.url || 'Unknown'}
-  p
-    a(href=`/genres/${genre.id}/edit`) Edit
-    form(action=`/genres/${genre.id}/delete`, method='POST')
-      button(type='submit') Delete
+  h1 #{genre.name}
+
+  div
+    h2 #{t('detail.books')}
+    if genre_books.length
+      dl
+        each book in genre_books
+          dt
+            a(href=`/books/${book.id}`) #{book.title}
+          dd #{book.summary}
+          p
+            a(href=`/genres/${genre.id}/edit` class='btn btn-primary') #{t('edit')}
+            form(action=`/genres/${genre.id}/delete`, method='POST' style='display: inline-block;')
+              button(type='submit' class='btn btn-danger') #{t('delete')}
+    else
+      p #{t('detail.noGenreBooks')}

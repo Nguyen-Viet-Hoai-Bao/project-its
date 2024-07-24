@@ -16,7 +16,7 @@ export class BookInstance extends BaseEntity {
     @Column({ type: 'date', nullable: true })
     due_back!: Date;
 
-    @ManyToOne(() => Book, book => book.instances)
+    @ManyToOne(() => Book, book => book.bookInstances)
     book!: Book;
 
     constructor(data?: Partial<BookInstance>) {

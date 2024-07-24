@@ -3,9 +3,12 @@ extends ../layout
 block content
   h1= title
   if genres.length
-    ul
+    ul.list-group
       each genre in genres
-        li
-          a(href=`/genres/${genre.id}`) #{genre.name} (URL: #{genre.url || 'Unknown'})
+        li.list-group-item
+          a(href=`/genres/${genre.id}`) 
+            | #{genre.name} 
+            span.text-muted 
+              | (URL: #{genre.url || t('notlist.unknownURL')})
   else
-    p There are no genres.
+    p #{t('notlist.noGenres')}

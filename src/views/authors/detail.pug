@@ -1,10 +1,26 @@
 extends ../layout
 
 block content
-  h1= author.first_name
-  p Born: #{author.date_of_birth}
-  p Died: #{author.date_of_death || 'Unknown'}
-  p
-    a(href=`/authors/edit/${author.id}`) Edit
+  h1 #{author.name}
+  p #{author.date_of_birth} - #{author.date_of_death}
+  
+  if author_books.length
+    h2 #{t('authorDetail.books')}
+    dl
+      each book in author_books
+        dt
+          a(href=`/books/${book.id}`) #{book.title}
+        dd #{book.summary}
+  else
+    p #{t('authorDetail.noBookAuthors')}
+  
+  div.buttons-container
+    a(href=`/authors/update/${author.id}` class='btn btn-primary') #{t('authorDetail.editButton')}
     form(action=`/authors/delete/${author.id}`, method='POST')
-      button(type='submit') Delete
+      button(type='submit' class='btn btn-danger') #{t('authorDetail.deleteButton')}
+
+  style.
+    .buttons-container {
+      display: flex;
+      gap: 10px; 
+    }

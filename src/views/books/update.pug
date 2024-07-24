@@ -1,36 +1,38 @@
 extends ../layout
 
 block content
-  h1= title
+  h1 #{title}
 
   form(action=`updatePost/${book.id}` method="POST")
     div.form-group
-      label(for="title") Title:
-      input#title.form-control(type="text" name="title" value=book.title required)
+      label(for="title") #{t('update_book_form.title_label')}: 
+      input(type="text" name="title" value=book.title required class='form-control')
 
     div.form-group
-      label(for="author") Author:
-      select#author.form-control(name="author" required)
+      label(for="author") #{t('update_book_form.author_label')}: 
+      select(name="author" required class='form-control')
         each author in authors
           option(value=author.id selected=(book.author && book.author.id === author.id))= `${author.first_name} ${author.family_name}`
 
     div.form-group
-      label(for="summary") Summary:
-      textarea#summary.form-control(name="summary" required)= book.summary
+      label(for="summary") #{t('update_book_form.summary_label')}: 
+      textarea(name="summary" required class='form-control')= book.summary
 
     div.form-group
-      label(for="isbn") ISBN:
-      input#isbn.form-control(type="text" name="isbn" value=book.isbn required)
+      label(for="isbn") #{t('update_book_form.isbn_label')}: 
+      input(type="text" name="isbn" value=book.isbn required class='form-control')
 
     div.form-group
-      label(for="genres") Genres:
-      select#genres.form-control(name="genre" multiple)
-        each genre in genres
-          option(value=genre.id selected=(book.genres.some(g => g.id === genre.id)))= genre.name
+      label(for="genre") #{t('update_book_form.genres_label')}: 
+      each genre in genres
+        div.form-check
+          input(type='checkbox' id=`genre_${genre.id}` name='genre' value=genre.id checked=(book && book.genres.some(g => g.id === genre.id)) class='form-check-input')
+          label(for=`genre_${genre.id}` class='form-check-label') #{genre.name}
 
     div.form-group
-      button(type="submit" class="btn btn-primary") Update Book
+      button(type="submit" class="btn btn-primary") #{t('update_book_form.update_button')}
+
   if errors
-    ul
+    ul.alert.alert-danger
       for error in errors
         li!= error.msg

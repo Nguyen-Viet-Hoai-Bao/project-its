@@ -1,10 +1,21 @@
 extends ../layout
 
 block content
-  h1= instance.id
-  p Status: #{instance.status || 'Unknown'}
-  p Due Back: #{instance.due_back || 'Unknown'}
+  h1 #{bookinstance.id}
+
   p
-    a(href=`/book-instances/${instance.id}/edit`) Edit
-    form(action=`/book-instances/${instance.id}/delete`, method='POST')
-      button(type='submit') Delete
+    strong #{t('detail.book')}: 
+    a(href=`/books/${bookinstance.book.id}`) #{bookinstance.book.title}
+
+  p
+    strong #{t('detail.imprint')}: 
+    | #{bookinstance.imprint}
+
+  p
+    strong #{t('detail.status')}: 
+    span(class=bookinstance.status.toLowerCase()) #{bookinstance.status}
+
+  if bookinstance.status != BookInstanceStatus.AVAILABLE
+    p
+      strong #{t('detail.dueback')}: 
+      | #{bookinstance.due_back}

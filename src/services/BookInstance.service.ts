@@ -1,47 +1,37 @@
-import { AppDataSource } from '../config/data-source';
 import { BookInstance } from '../entity/BookInstance.entity';
-import { Book } from '../entity/Book.entity';
+import { AppDataSource } from '../config/data-source';
+import { BookInstanceStatus } from '@src/enums/BookInstanceStatus';
 
 const bookInstanceRepository = AppDataSource.getRepository(BookInstance);
 
-export const findAllBookInstances = async () => {
-    return await bookInstanceRepository.find({ relations: ['book'] });
+export class BookInstanceService {
+  private bookInstanceRepository = AppDataSource.getRepository(BookInstance)
+  async getIndexDataBookInstances() {
+    return this.bookInstanceRepository.count()
+  }
+  async getIndexDataAvailableBookInstances() {
+    return this.bookInstanceRepository.count({ where: { status: BookInstanceStatus.Available } })
+  }
+}
+
+export const getBookInstances = async () => {
+  return bookInstanceRepository.find({
+      relations: ['book'],
+  });
 };
 
-export const findBookInstanceById = async (id: number) => {
-    return await bookInstanceRepository.findOne({ where: { id } });
+export const getBookInstanceById = async (instanceId: number) => {
+  return await bookInstanceRepository.findOne({ where: { id: instanceId }, relations: ['book'] });
 };
 
-export const createBookInstance = async (bookInstanceData: Partial<BookInstance>, bookId: number) => {
-    const book = await AppDataSource.getRepository(Book).findOne({ where: { id: bookId } });
-    if (!book) throw new Error('Book not found');
+export async function createBookInstance(bookInstanceInput: any): Promise<BookInstance> {
+  const { book, imprint, due_back, status } = bookInstanceInput;
 
-    const newBookInstance = bookInstanceRepository.create({
-        ...bookInstanceData,
-        book,
-    });
+  const newBookInstance = new BookInstance();
+  newBookInstance.book = book;
+  newBookInstance.imprint = imprint;
+  newBookInstance.due_back = due_back;
+  newBookInstance.status = status;
 
-    return await bookInstanceRepository.save(newBookInstance);
-};
-
-export const deleteBookInstance = async (id: number) => {
-    const bookInstance = await findBookInstanceById(id);
-    if (bookInstance) {
-        await bookInstanceRepository.remove(bookInstance);
-        return true;
-    }
-    return false;
-};
-
-export const updateBookInstance = async (id: number, bookInstanceData: Partial<BookInstance>, bookId: number) => {
-    const bookInstance = await findBookInstanceById(id);
-    if (bookInstance) {
-        const book = await AppDataSource.getRepository(Book).findOne({ where: { id: bookId } });
-        if (!book) throw new Error('Book not found');
-
-        Object.assign(bookInstance, bookInstanceData, { book });
-
-        return await bookInstanceRepository.save(bookInstance);
-    }
-    return null;
+  return await bookInstanceRepository.save(newBookInstance);
 };

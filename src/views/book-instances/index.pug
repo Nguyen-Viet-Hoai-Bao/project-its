@@ -3,9 +3,14 @@ extends ../layout
 block content
   h1= title
   if instances.length
-    ul
+    ul.list-group
       each instance in instances
-        li
-          a(href=`/book-instances/${instance.id}`) #{instance.imprint} (Status: #{instance.status || 'Unknown'}, Due Back: #{instance.due_back || 'Unknown'}, BookId: #{instance.book_id || 'Unknown'})
+        li.list-group-item
+          a(href=`/bookinstances/${instance.id}`) 
+            | #{instance.imprint} 
+            span.text-muted 
+              | (Status: #{instance.status || t('notlist.unknownStatus')}, 
+              | Due Back: #{instance.due_back || t('notlist.unknownDueBack')}, 
+              | BookId: #{instance.bookId || t('notlist.unknownBookId')})
   else
-    p There are no instances.
+    p #{t('notlist.noInstances')}

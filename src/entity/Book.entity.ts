@@ -18,14 +18,11 @@ export class Book extends BaseEntity {
     @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255, nullable: true })
     isbn!: string;
 
-    @Column({ type: 'int' })
-    authorId!: number;
-
     @ManyToOne(() => Author, author => author.books)
     author!: Author;
 
     @OneToMany(() => BookInstance, instance => instance.book)
-    instances!: BookInstance[];
+    bookInstances!: BookInstance[];
 
     @ManyToMany(() => Genre)
     @JoinTable({
@@ -59,6 +56,6 @@ export class Book extends BaseEntity {
     }
 
     getInstances(): BookInstance[] {
-        return this.instances;
+        return this.bookInstances;
     }
 }

@@ -1,0 +1,23 @@
+extends ../layout
+
+block content
+  h1 #{title}
+  form(method='POST' action='createPost')
+    div.form-group
+      label(for='first_name') #{t('author.create_first_name')}:
+      input.form-control(type='text' placeholder=t('author.create_placeholder_first_name') name='first_name' required value=(undefined === author ? '' : author.first_name))
+    div.form-group
+      label(for='family_name') #{t('author.create_family_name')}:
+      input.form-control(type='text' placeholder=t('author.create_placeholder_family_name') name='family_name' required value=(undefined === author ? '' : author.family_name))
+    div.form-group
+      label(for='date_of_birth') #{t('author.create_date_of_birth')}:
+      input.form-control(type='date' placeholder=t('author.create_placeholder_date_of_birth') name='date_of_birth' required value=(undefined === author ? '' : formatAuthorDate(author.date_of_birth)))
+    div.form-group
+      label(for='date_of_death') #{t('author.create_date_of_death')}:
+      input.form-control(type='date' placeholder=t('author.create_placeholder_date_of_death') name='date_of_death' value=(undefined === author || !author.date_of_death ? '' : formatAuthorDate(author.date_of_death)))
+    button.btn.btn-primary(type='submit') #{t('create.author')}
+    
+    if errors
+      ul
+        for error in errors
+          li!= error.msg
