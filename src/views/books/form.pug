@@ -1,0 +1,36 @@
+extends ../layout
+
+block content
+  h1 #{title}
+  form(method='POST' action='createPost')
+    div.form-group
+      label(for='title') #{t('book.create_title')}:
+      input(type='text' placeholder=t('book.create_placeholder_title') name='title' required value=(undefined === book ? '' : book.title))#title.form-control
+      
+    div.form-group
+      label(for='author') #{t('book.create_author')}:
+      select(name='author' required class='form-control')
+        each author in authors
+          option(value=author.id selected=(book && book.author && book.author.id === author.id)) #{author.first_name}
+
+    div.form-group
+      label(for='summary') #{t('book.create_summary')}:
+      textarea(type='text' placeholder=t('book.create_placeholder_summary') name='summary' required class='form-control')= (undefined === book ? '' : book.summary)
+
+    div.form-group
+      label(for='isbn') #{t('book.create_isbn')}:
+      input(type='text' placeholder=t('book.create_placeholder_isbn') name='isbn' required value=(undefined === book ? '' : book.isbn))#isbn.form-control
+
+    div.form-group
+      label #{t('book.create_genre')}:
+      each genre in genres
+        div.form-check
+          input(type='checkbox' id=`genre_${genre.id}` name='genre' value=genre.id checked=(book && book.genres && book.genres.includes(genre.id)) class='form-check-input')
+          label(for=`genre_${genre.id}` class='form-check-label') #{genre.name}
+
+    button(type='submit' class='btn btn-primary') #{t('create.book')}
+    
+    if errors
+      ul.alert.alert-danger
+        for error in errors
+          li!= error.msg

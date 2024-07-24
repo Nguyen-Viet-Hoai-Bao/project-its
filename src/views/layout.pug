@@ -13,19 +13,30 @@ html(lang='en')
       div(class='row')
         div(class='col-sm-2')
           block sidebar
-            ul(class='sidebar-nav')
-              li
-                a(href='/catalog') Home
-              li
-                a(href='/catalog/books') All books
-              li
-                a(href='/catalog/authors') All authors
-              li
-                a(href='/catalog/author/create') Create new author
-              li
-                a(href='/catalog/genre/create') Create new genre
-              // other link create
-        div(class='col-sm-10')
+            ul(class='list-group sidebar-nav')
+              li(class='list-group-item')
+                a(href='/') #{t('sidebar.home')}
+              li(class='list-group-item')
+                a(href='/books') #{t('sidebar.book')}
+              li(class='list-group-item')
+                a(href='/authors') #{t('sidebar.author')}
+              li(class='list-group-item')
+                a(href='/genres') #{t('sidebar.genre')}
+              li(class='list-group-item')
+                a(href='/bookinstances') #{t('sidebar.bookinstance')}
+              hr
+              li(class='list-group-item')
+                a(href='/authors/create') #{t('sidebar.create_author')}
+              li(class='list-group-item')
+                a(href='/genres/create') #{t('sidebar.create_genre')}
+              li(class='list-group-item')
+                a(href='/books/create') #{t('sidebar.create_book')}
+              li(class='list-group-item')
+                a(href='/bookinstances/create') #{t('sidebar.create_bookinstance')}
+              hr
+              li(class='list-group-item')
+                a(href='?lng=en') #{t('sidebar.english')} | #[a(href='?lng=vi') #{t('sidebar.vietnamese')}]
+        div(class='col-sm-9')
           block content
             h1= title
-            p Welcome to #{title}
+            p(class='lead') Welcome to #{title}

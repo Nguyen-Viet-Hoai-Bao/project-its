@@ -1,90 +1,213 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from 'express';
 import asyncHandler from 'express-async-handler';
-import { AppDataSource } from '../config/data-source';
-import { Book } from '../entity/Book.entity';
-import { Author } from "@src/entity/Author.entity";
-import { Genre } from "@src/entity/Genre.entity";
+import { AuthorService, getAuthors } from '@src/services/Author.service';
+import { BookService, getBooks, getBookById, updateBook, createBook } from '@src/services/Book.service';
+import { BookInstanceService } from '@src/services/BookInstance.service';
+import { GenreService, getGenres } from '@src/services/Genre.service';
+import { BookInstanceStatus } from '@src/enums/BookInstanceStatus';
+import { body, validationResult } from 'express-validator';
 
-const bookRepository = AppDataSource.getRepository(Book);
+const authorService = new AuthorService();
+const bookService = new BookService();
+const bookInstanceService = new BookInstanceService();
+const genreService = new GenreService();
 
-// Display list of all Books.
+async function validateAndFetchBook(req: Request, res: Response, next: NextFunction) {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+        req.flash('error_msg', req.t('notlist.invalidBookId'));
+        return res.redirect('/error');
+    }
+    const book = await getBookById(id);
+    if (book === null) {
+        req.flash('error_msg', req.t('notlist.bookNotFound'));
+        return res.redirect('/error');
+    }
+    return book;
+}
+
+export const index = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const [numBooks, numBookInstances, availableBookInstances, numAuthors, numGenres] = await Promise.all([
+        bookService.getIndexDataBook(),
+        bookInstanceService.getIndexDataBookInstances(),
+        bookInstanceService.getIndexDataAvailableBookInstances(),
+        authorService.getIndexDataAuthor(),
+        genreService.getIndexDataGenre()
+    ]);
+    res.render('index', {
+        title: 'Local Library',
+        numBooks,
+        numBookInstances,
+        numAvailableBookInstances: availableBookInstances,
+        numAuthors,
+        numGenres
+    });
+});
+
 export const bookList = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const books = await bookRepository.find({ relations: ['author', 'genres'] });
-  
-    res.render('books/index', { books, title: 'List of Books' });
-});
-
-// Display detail page for a specific Book.
-export const bookDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Get Book Detail");
-    const bookId = parseInt(req.params.id, 10);
-    const book = await bookRepository.findOne({ where: { id: bookId } });
-
-    if (book) {
-        res.json(book);
-    } else {
-        res.status(404).json({ message: 'Book not found' });
-    }
-});
-
-export const bookCreate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Create Book");
-    const { title, summary, isbn, url, authorId, genreIds } = req.body;
-
     try {
-        const author = authorId ? await AppDataSource.getRepository(Author).findOne(authorId) : null;
-        const genres = genreIds ? await AppDataSource.getRepository(Genre).findByIds(genreIds) : [];
-
-        const newBook = bookRepository.create({title, summary, isbn, url,
-            author: author || undefined, 
-            genres: genres.length > 0 ? genres : undefined, 
-         });
-
-        await bookRepository.save(newBook);
-        res.status(201).json(newBook);
+        const books = await getBooks();
+        res.render('books/index', { books, title: req.t('list.book') });
     } catch (error) {
-        res.status(500).json({ message: 'Failed to create book', error });
+        req.flash('error_msg', req.t('notlist.failedToFetchBooks'));
+        res.redirect('/error');
     }
 });
 
-// Handle Book delete on DELETE.
-export const bookDelete = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Delete Book");
-    const bookId = parseInt(req.params.id, 10);
-    const book = await bookRepository.findOne({ where: { id: bookId } });
-
+export const bookDetail = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const book = await validateAndFetchBook(req, res, next);
     if (book) {
-        await bookRepository.remove(book);
-        res.json({ message: 'Book deleted' });
-    } else {
-        res.status(404).json({ message: 'Book not found' });
+        res.render('books/detail', {
+            title: req.t('detail.bookDetail'),
+            book,
+            bookInstances: book?.bookInstances,
+            bookGenres: book?.genres,
+            BookInstanceStatus
+        });
     }
 });
 
-// Handle Book update on PUT.
-export const bookUpdate = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    console.log("Update Book");
-    const bookId = parseInt(req.params.id, 10);
-    const { title, summary, isbn, url, authorId, genreIds } = req.body;
-    const book = await bookRepository.findOne({ where: { id: bookId } });
+export const bookUpdateGet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+      const errors = validationResult(req);
+      const id = parseInt(req.params.id, 10);
+      const [book, allAuthors, allGenres] = await Promise.all([
+          getBookById(id),
+          getAuthors(),
+          getGenres()
+      ]);
 
-    if (book) {
-        try {
-            const genres = await AppDataSource.getRepository(Genre).findByIds(genreIds);
+      if (!book) {
+          req.flash('error_msg', req.t('notlist.failedToFetchBooks'));
+          return res.redirect('/books');
+      }
 
-            book.title = title;
-            book.summary = summary;
-            book.isbn = isbn;
-            book.url = url;
-            book.author = authorId ;
-            book.genres = genres;
+      res.render('books/update', { title: req.t('book.update_book_title'), authors: allAuthors, genres: allGenres, book, errors });
+  } catch (error) {
+      req.flash('error_msg', req.t('notlist.failedToFetchBooks'));
+      return res.redirect('/books');
+  }
+});
 
-            const updatedBook = await bookRepository.save(book);
-            res.json(updatedBook);
-        } catch (error) {
-            res.status(500).json({ message: 'Failed to update book', error });
+export const bookUpdatePost = [
+  (req: Request, res: Response, next: NextFunction) => {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+          return res.status(400).send(req.t('error.invalidBookId'));
+      }
+      req.body.id = id;
+
+      if (!Array.isArray(req.body.genre)) {
+          req.body.genre = typeof req.body.genre === 'undefined' ? [] : [req.body.genre];
+      }
+
+      next();
+  },
+  body('title').trim().isLength({ min: 1 }).escape().withMessage('title_empty'),
+  body('author').trim().isLength({ min: 1 }).escape().withMessage('author_empty'),
+  body('summary').trim().isLength({ min: 1 }).escape().withMessage('summary_empty'),
+  body('isbn').trim().isLength({ min: 1 }).escape().withMessage('isbn_empty'),
+  body('genre.*').escape(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+      const id = req.body.id;
+      const errors = validationResult(req);
+
+      const bookData = {
+          title: req.body.title,
+          author: req.body.author,
+          summary: req.body.summary,
+          isbn: req.body.isbn
+      };
+      const genreIds = req.body.genre.map((item: string) => parseInt(item, 10));
+
+      if (!errors.isEmpty()) {
+          const [allAuthors, allGenres] = await Promise.all([
+              getAuthors(),
+              getGenres()
+          ]);
+
+          res.render('books/update', {
+              title: req.t('book.update_book_title'),
+              authors: allAuthors,
+              genres: allGenres,
+              book: { id, ...bookData, genres: genreIds },
+              errors: errors.array()
+          });
+          return;
+      }
+
+      try {
+          const updatedBook = await updateBook(id, bookData, genreIds);
+          if (updatedBook) {
+              req.flash('success_msg', req.t('book.book_updated'));
+              return res.render('books/detail', {
+                  title: req.t('detail.bookDetail'),
+                  book: updatedBook,
+                  bookInstances: updatedBook.bookInstances,
+                  bookGenres: updatedBook.genres,
+                  BookInstanceStatus
+              });
+          } else {
+              res.status(404).send(req.t('error.bookNotFound'));
+          }
+      } catch (error) {
+          req.flash('error_msg', req.t('error.updateFail'));
+          return res.redirect('/books');
+      }
+  })
+];
+
+export const bookCreateGet = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const [authors, genres] = await Promise.all([
+      getAuthors(),
+      getGenres()
+    ]);
+    res.render('books/form', { title: req.t('book.create_book'), authors, genres });
+  } catch (error) {
+    req.flash('error_msg', req.t('notlist.failedToFetchData'));
+    res.redirect('/error');
+  }
+});
+
+export const bookCreatePost = [
+    body('title').trim().isLength({ min: 1 }).escape().withMessage('title_empty'),
+    body('author').trim().isLength({ min: 1 }).escape().withMessage('author_empty'),
+    body('summary').trim().isLength({ min: 1 }).escape().withMessage('summary_empty'),
+    body('isbn').trim().isLength({ min: 1 }).escape().withMessage('isbn_empty'),
+    body('genre.*').escape(),
+  
+    asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+        const { title, author, summary, isbn, genre } = req.body;
+        const genreIds = Array.isArray(genre) ? genre.map(id => parseInt(id, 10)) : [];
+        if (!errors.isEmpty()) {
+            const [authors, genres] = await Promise.all([
+                getAuthors(),
+                getGenres()
+            ]);
+            res.render('books/form', {
+                title: req.t('book.create_book'),
+                authors,
+                genres,
+                book: req.body,
+                errors: errors.array()
+            });
+        } else {
+            try {
+                await createBook({ title, author, summary, isbn, genres: genreIds });
+                req.flash('success_msg', req.t('book.success.bookCreated'));
+                res.redirect('/books');
+            } catch (err) {
+                req.flash('error_msg', req.t('error.createFail'));
+                res.redirect('/books/form');
+            }
         }
-    } else {
-        res.status(404).json({ message: 'Book not found' });
-    }
-});
+    })
+  ];
+  
+
+export const bookDelete = (req: Request, res: Response): void => {
+  const bookId = req.params.id;
+  res.send(`NOT IMPLEMENTED: Book delete: ${bookId}`);
+};

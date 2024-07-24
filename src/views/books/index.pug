@@ -3,9 +3,14 @@ extends ../layout
 block content
   h1= title
   if books.length
-    ul
+    ul.list-group
       each book in books
-        li
-          a(href=`/books/${book.id}`) #{book.title} (Summary : #{book.summary || 'Unknown'}, ISBN: #{book.isbn || 'Unknown'}, AuthorId: #{book.author_id || 'Unknown'})
+        li.list-group-item
+          a(href=`/books/${book.id}`) 
+            | #{book.title} 
+            span.text-muted 
+              | (Summary: #{book.summary || t('notlist.unknownSummary')}, 
+              | ISBN: #{book.isbn || t('notlist.unknownISBN')}, 
+              | Author: #{book.author.first_name || t('notlist.unknownAuthor')})
   else
-    p There are no books.
+    p #{t('notlist.noBooks')}

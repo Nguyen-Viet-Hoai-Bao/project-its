@@ -3,9 +3,9 @@ extends ../layout
 block content
   h1= title
   if authors.length
-    ul
+    ul.list-group
       each author in authors
-        li
-          a(href=`/authors/${author.id}`) #{author.first_name} (Family Name: #{author.family_name || 'Unknown'}, Born: #{author.date_of_birth || 'Unknown'}, Died: #{author.date_of_death || 'Unknown'})
+        li.list-group-item
+          a(href=`/authors/${author.id}`) #{author.first_name} (Family Name: #{author.family_name || t('notlist.unknownFamilyName')}, Born: #{author.date_of_birth || t('notlist.unknownDateOfBirth')}, Died: #{author.date_of_death || t('notlist.unknownDateOfDeath')})
   else
-    p There are no authors.
+    p #{t('notlist.noAuthors')}

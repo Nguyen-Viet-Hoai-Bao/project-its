@@ -7,10 +7,10 @@ export class Author extends BaseEntity {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255 })
     first_name!: string;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM, nullable: true })
+    @Column({ type: 'varchar', length: COLUMN_LENGTH.NUM_255, nullable: true })
     family_name!: string;
 
     @Column({ type: 'date', nullable: true })
@@ -19,14 +19,15 @@ export class Author extends BaseEntity {
     @Column({ type: 'date', nullable: true })
     date_of_death!: Date;
 
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM, nullable: true })
-    name!: string;
-
-    @Column({ type: 'varchar', length: COLUMN_LENGTH.MEDIUM, nullable: true })
-    url!: string;
-
     @OneToMany(() => Book, book => book.author)
     books!: Book[];
+
+    constructor(data?: Partial<Author>) {
+        super();
+        if (data) {
+            Object.assign(this, data);
+        }
+    }
 
     getFirstName(): string {
         return this.first_name;
@@ -42,13 +43,5 @@ export class Author extends BaseEntity {
 
     getDateOfDeath(): Date | null {
         return this.date_of_death || null;
-    }
-
-    getName(): string | null {
-        return this.name || null;
-    }
-
-    getUrl(): string | null {
-        return this.url || null;
     }
 }

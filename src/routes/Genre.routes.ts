@@ -1,13 +1,15 @@
-import {Router} from 'express';
-import { genreList, genreDetail, genreCreate, genreDelete, genreUpdate } from '../controllers/Genre.controller';
+import { Router } from 'express';
+import { genreList, genreDetail, genreCreateGet, genreCreatePost, genreDelete, genreUpdate } from '../controllers/Genre.controller';
 
 const router = Router();
 
 router.get('/', genreList);
 
+router.get('/create', genreCreateGet);
+
 router.get('/:id', genreDetail);
 
-router.post('/create', genreCreate);
+router.post('/createPost', genreCreatePost);
 
 router.post('/delete/:id', genreDelete);
 

@@ -1,16 +1,18 @@
-import {Router} from 'express';
-import { bookList, bookDetail, bookCreate, bookDelete, bookUpdate } from '../controllers/Book.controller';
+import { Router } from 'express';
+import { bookList, bookDetail, bookUpdateGet, bookUpdatePost, bookCreateGet, bookCreatePost } from '../controllers/Book.controller';
 
 const router = Router();
 
 router.get('/', bookList);
 
+router.get('/create', bookCreateGet);
+
 router.get('/:id', bookDetail);
 
-router.post('/create', bookCreate);
+router.post('/createPost', bookCreatePost);
 
-router.post('/delete/:id', bookDelete);
+router.get('/update/:id', bookUpdateGet);
 
-router.post('/update/:id', bookUpdate);
+router.post('/update/updatePost/:id', bookUpdatePost);
 
 export default router;
